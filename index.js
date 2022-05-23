@@ -16,6 +16,7 @@ async function run(){
   try{
     await client.connect();
     const itemsCollection = client.db('ElectricItems').collection('items');
+    const userCollection = client.db('ElectricItems').collection('users');
 
     //get all items
     app.get('/items', async(req, res) => {
@@ -30,6 +31,27 @@ async function run(){
       const filter = {_id: ObjectId(id)};
       const result = await itemsCollection.findOne(filter);
       res.send(result);
+    });
+
+    //add a new user
+    app.put('/user/:email', async(req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = {email: email};
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send({result});
+    });
+
+     //get single users
+     app.get('/user/:email', async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email}
+      const users = await userCollection.findOne(query);
+      res.send(users);
     })
   }
   finally{}
