@@ -46,8 +46,21 @@ async function run(){
       res.send({result});
     });
 
-     //get single users
-     app.get('/user/:email', async(req, res) => {
+    //update user
+    app.put('/updateuser/:email', async(req, res) => {
+      const email = req.params.email;
+      const userupdate = req.body;
+      const filter = {email: email};
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: userupdate,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send({result});
+    })
+
+    //get single users
+      app.get('/user/:email', async(req, res) => {
       const email = req.params.email;
       const query = {email: email}
       const users = await userCollection.findOne(query);
