@@ -103,6 +103,14 @@ async function run(){
       const query = {};
       const result = await userCollection.find(query).toArray();
       res.send(result);
+    });
+
+    //Delete User
+    app.delete('/user/:email', verifyJwt, verifyAdmin, async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
     })
 
     //add a order
@@ -129,6 +137,14 @@ async function run(){
       }
     });
 
+    //Delete Order
+    app.delete('/order/:email', verifyJwt, async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
+
     //add a new Admin
     app.put('/user/admin/:email', verifyJwt, verifyAdmin, async(req, res) => {
       const email = req.params.email;
@@ -148,7 +164,7 @@ async function run(){
       const user = await userCollection.findOne({email: email});
       const isAdmin = user.role === 'admin';
       res.send({admin: isAdmin})
-    })
+    });
   }
   finally{}
 }
