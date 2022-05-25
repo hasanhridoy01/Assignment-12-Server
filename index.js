@@ -146,6 +146,14 @@ async function run(){
       res.send(result);
     });
 
+    //find single Order
+    app.get('/order/:id', verifyJwt, async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)}
+      const order = await orderCollection.findOne(query);
+      res.send(order);
+    });
+
     //add a new Admin
     app.put('/user/admin/:email', verifyJwt, verifyAdmin, async(req, res) => {
       const email = req.params.email;
