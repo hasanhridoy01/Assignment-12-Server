@@ -35,6 +35,7 @@ async function run(){
     const itemsCollection = client.db('ElectricItems').collection('items');
     const userCollection = client.db('ElectricItems').collection('users');
     const orderCollection = client.db('ElectricItems').collection('orders');
+    const reviewCollection = client.db('ElectricItems').collection('review');
 
     //Verify Admin
     const verifyAdmin = async(req, res, next) => {
@@ -124,7 +125,7 @@ async function run(){
       return res.send({success: true, result});
     });
 
-    //get all orders
+    //get single orders using email
     app.get('/order', verifyJwt, async(req, res) => {
       const email = req.query.Email;
       const decodedEmail = req.decoded.email;
@@ -164,6 +165,56 @@ async function run(){
       const user = await userCollection.findOne({email: email});
       const isAdmin = user.role === 'admin';
       res.send({admin: isAdmin})
+    });
+
+    //add new Review
+    app.post('/review', verifyJwt, async(req, res) => {
+      const review = req.body;
+      const exists = await reviewCollection.findOne(review);
+      if(exists){
+        return res.send({success: false, review: exists})
+      }
+      const result = await reviewCollection.insertOne(review);
+      return res.send({success: true, result});
+    });
+
+    //get all review
+    app.get('/review', async(req, res) => {
+      const query = {};
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //get single review using email
+    app.get('/review', verifyJwt, async(req, res) => {
+      const email = req.query.Email;
+      const decodedEmail = req.decoded.email;
+      if(email === decodedEmail){
+        const query = {email: email};
+        const review = await reviewCollection.find(query).toArray();
+        return res.send(review);
+      }else{
+        return res.status(403).send({message: 'forbiddenAccess'})
+      }
+    });
+
+    //Delete Review
+    app.delete('/review/:email', verifyJwt, async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //add new Items
+    app.post('/items', verifyJwt, verifyAdmin, async(req, res) => {
+      const items = req.body;
+      const exists = await itemsCollection.findOne(items);
+      if(exists){
+        return res.send({success: false, review: exists})
+      }
+      const result = await itemsCollection.insertOne(items);
+      return res.send({success: true, result});
     });
   }
   finally{}
