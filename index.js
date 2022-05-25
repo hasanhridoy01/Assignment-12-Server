@@ -216,6 +216,27 @@ async function run(){
       const result = await itemsCollection.insertOne(items);
       return res.send({success: true, result});
     });
+
+    //get single items using email
+    app.get('/item', verifyJwt, verifyAdmin, async(req, res) => {
+      const email = req.query.Email;
+      const decodedEmail = req.decoded.email;
+      if(email === decodedEmail){
+        const query = {email: email};
+        const review = await itemsCollection.find(query).toArray();
+        return res.send(review);
+      }else{
+        return res.status(403).send({message: 'forbiddenAccess'})
+      }
+    });
+
+    //Delete Items
+    app.delete('/item/:email', verifyJwt, async(req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const result = await itemsCollection.deleteOne(query);
+      res.send(result);
+    });
   }
   finally{}
 }
