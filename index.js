@@ -4,6 +4,7 @@ const app = express();
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 //middleware
@@ -36,6 +37,7 @@ async function run(){
     const userCollection = client.db('ElectricItems').collection('users');
     const orderCollection = client.db('ElectricItems').collection('orders');
     const reviewCollection = client.db('ElectricItems').collection('review');
+    const paymentCollection = client.db('ElectricItems').collection('payment');
 
     //Verify Admin
     const verifyAdmin = async(req, res, next) => {
@@ -48,6 +50,41 @@ async function run(){
         res.status(403).send({message: 'forbiddenAccess'})
       }
     }
+
+    //post payment api
+    app.post('/create-payment-intent', verifyJwt, async(req, res) => {
+      const service = req.body;
+      const price = service.price;
+      const amount = price*100;
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    //update Order and insertPayment
+    app.patch('/order/:id', verifyJwt, async(req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        }
+      }
+      const updatedOrder = await orderCollection.updateOne(filter, updateDoc);
+      const result = await paymentCollection.insertOne(payment);
+      res.send(updateDoc);
+    })
 
     //get all items
     app.get('/items', async(req, res) => {
